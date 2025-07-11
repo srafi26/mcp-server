@@ -9,6 +9,22 @@ import {
   TextContent,
 } from '@modelcontextprotocol/sdk/types.js';
 
+// Input validation helper
+const validateString = (value: unknown, fieldName: string): string => {
+  if (typeof value !== 'string') {
+    throw new Error(`${fieldName} must be a string`);
+  }
+  return value;
+};
+
+const validateNumber = (value: unknown, fieldName: string): number => {
+  const num = Number(value);
+  if (isNaN(num)) {
+    throw new Error(`${fieldName} must be a valid number`);
+  }
+  return num;
+};
+
 // Define the available tools
 const tools: Tool[] = [
   {
@@ -62,7 +78,9 @@ const tools: Tool[] = [
       required: ['operation', 'a', 'b'],
     },
   },
-];// Create the server
+];
+
+// Create the server
 const server = new Server(
   {
     name: 'mcp-server',
@@ -93,33 +111,31 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case 'echo':
+        const message = validateString(args.message, 'message');
         return {
           content: [
             {
               type: 'text',
-              text: String(args.message || ''),
+              text: message,
             } as TextContent,
           ],
         };
 
       case 'uppercase':
+        const text = validateString(args.text, 'text');
         return {
           content: [
             {
               type: 'text',
-              text: String(args.text || '').toUpperCase(),
+              text: text.toUpperCase(),
             } as TextContent,
           ],
         };
 
       case 'calculate':
-        const operation = args.operation as string;
-        const a = Number(args.a);
-        const b = Number(args.b);
-        
-        if (isNaN(a) || isNaN(b)) {
-          throw new Error('Invalid numbers provided');
-        }
+        const operation = validateString(args.operation, 'operation');
+        const a = validateNumber(args.a, 'a');
+        const b = validateNumber(args.b, 'b');
         
         let result: number;
 
