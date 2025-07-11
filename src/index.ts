@@ -86,6 +86,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
+  if (!args) {
+    throw new Error('No arguments provided');
+  }
+
   try {
     switch (name) {
       case 'echo':
@@ -93,7 +97,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: 'text',
-              text: args.message,
+              text: String(args.message || ''),
             } as TextContent,
           ],
         };
@@ -103,13 +107,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: 'text',
-              text: args.text.toUpperCase(),
+              text: String(args.text || '').toUpperCase(),
             } as TextContent,
           ],
         };
 
       case 'calculate':
-        const { operation, a, b } = args;
+        const operation = args.operation as string;
+        const a = Number(args.a);
+        const b = Number(args.b);
+        
+        if (isNaN(a) || isNaN(b)) {
+          throw new Error('Invalid numbers provided');
+        }
+        
         let result: number;
 
         switch (operation) {
